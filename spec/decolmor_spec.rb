@@ -37,12 +37,22 @@ RSpec.describe Decolmor do
       end
 
       it "HEX w alpha channel and prefix # to RGBA" do
-        docs "alpha into range 0..1 and rounding 5"
+        docs "alpha into range 0..1 and rounding 3"
         color = colors.keys.sample
         alphas.each_pair do |hex_alpha, alpha|
           hex = format('%s%s', color, hex_alpha)
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor::hex_to_rgb(hex) ).to eq rgba
+        end
+      end
+
+      it "set rounding for alpha channel" do
+        color = colors.keys.sample
+        alphas.each_pair do |hex_alpha, alpha|
+          rounding = 2
+          hex = format('%s%s', color, hex_alpha)
+          rgba = colors[color][:rgb] + [alpha[:rgb].round(rounding)]
+          expect( Decolmor::hex_to_rgb(hex, rounding) ).to eq rgba
         end
       end
 
@@ -53,6 +63,14 @@ RSpec.describe Decolmor do
           hex = format('%s%s', color, hex_alpha).delete('#')
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor::hex_to_rgb(hex) ).to eq rgba
+        end
+      end
+
+      it "HEX short version to RGB(A)" do
+        colors = {'6FC' => [102, 255, 204], '#9C3' => [153, 204, 51], '36FF' => [51, 102, 255, 1]}
+
+        colors.each_pair do |hex_short, rgb|
+          expect( Decolmor::hex_to_rgb(hex_short) ).to eq rgb
         end
       end
     end

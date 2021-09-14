@@ -2,9 +2,15 @@ module Decolmor
 
   #========= HEX <==> RGB(A) =============================================
 
-  def self.hex_to_rgb(hex)
-    rgb = hex.gsub('#','').scan(/../).map(&:hex).map(&:to_i)
-    rgb.size == 4 ? rgb + [(rgb.delete_at(3) / 255.to_f).round(5)] : rgb
+  def self.hex_to_rgb(hex, alpha_round = 3)
+    hex = hex.gsub('#','')
+    hex = if [3, 4].include? hex.length
+            hex.chars.map{ |char| char * 2 }
+          else
+            hex.scan(/../)
+          end
+    rgb = hex.map(&:hex)
+    rgb.size == 4 ? rgb + [(rgb.delete_at(3) / 255.to_f).round(alpha_round)] : rgb
   end
 
   def self.rgb_to_hex(rgb)

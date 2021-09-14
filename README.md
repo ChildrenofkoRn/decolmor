@@ -46,6 +46,7 @@ This is enough to loselessly convert RGB -> HSL/HSV/HSB/CMYK -> RGB:
     Decolmor::hsl_to_rgb(hsl)  # => [224, 23, 131]
 ```
 If you convert between HSL <==> HSV (HSB) with a rounding of 2, you can get more accurate results.  
+This can also be useful if you use HSL/HSB for intermediate changes and then go back to RGB.  
 You can change rounding globally:
 ```ruby
     Decolmor::hsx_round = 2
@@ -58,13 +59,24 @@ You can also specify rounding as a second argument when calling the method:
 ```
 In this case, the global rounding will be ignored.
 If you need to get integers, use 0.
-	
+
+## HEX to RGB(A)
+ - with & without prefix `#`
+ - short HEX are supported (including Alpha)
+ - can be set rounding for the Alpha channel
+
 ## Alpha channel
-When converting from HEX to RGBA Alpha channel is converted to a value from the range `0..1` with rounding 5:
+When converting from HEX to RGBA Alpha channel is converted to a value from the range `0..1` with rounding 3:  
+ - 3 digits is enough for a lossless conversion `0..255` -> `0..1` -> `0..255`
 ```ruby
-    Decolmor::hex_to_rgb('#19988BB8')  # => [25, 152, 139, 0.72157]
+    Decolmor::hex_to_rgb('#19988BB8')  # => [25, 152, 139, 0.722]
 ```
 Consequently, when converting to HEX from RGBA, Alpha from the range `0..1` is assumed.  
+You can also set rounding for Alpha channel as a second argument:
+```ruby
+    Decolmor::hex_to_rgb('#19988BB8', 2)  # => [25, 152, 139, 0.72]
+```
+This only works for converting HEX to RGBA.  
 In other cases (conversions between RGB/HSL/HSV/HSB/CMYK) Alpha channel remains unchanged.
 
 ## HSV or HSB
