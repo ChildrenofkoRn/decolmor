@@ -1,8 +1,17 @@
 # Changelog
 
-## 1.0.0 (September 13, 2021)
+## 1.1.2 (September 16, 2021)
 
-* Initial release
+* Migrate: Travis CI => Github Actions Workflow
+* Fix: returned helper methods to private
+* Now the main code is in one file: lib/decolmor/main.rb  
+  You can just `include` it in and use it (separately from the gem)
+
+## 1.1.1 (September 16, 2021)
+
+* Now you can `include` the module into your class
+    * gem methods will be available as class methods
+* Fixed default branch in .gemspec metadata paths
 
 ## 1.1.0 (September 14, 2021)
 
@@ -14,8 +23,6 @@
   * support short version of HEX  
   e.g: `#CF3`, `0F9`, `#0F9F`
 
-## 1.1.1 (September 16, 2021)
+## 1.0.0 (September 13, 2021)
 
-* Now you can `include` the module into your class
-    * gem methods will be available as class methods
-* Fixed default branch in .gemspec metadata paths
+* Initial release

@@ -4,6 +4,13 @@ module Decolmor
     base.extend ClassMethods
   end
 
+  #========= Set default rounding for HSL/HSV/HSB/CMYK conversion ========
+
+  # round 1 enough for lossless conversion RGB -> HSL/HSV/HSB -> RGB
+  # for lossless conversion HSL <==> HSV (HSB) better to use round 2
+  #
+  HSX_ROUND = 1
+
   module ClassMethods
 
     attr_writer :hsx_round
@@ -255,6 +262,8 @@ module Decolmor
       rgb = [c, m, y].map { |channel| converter.call(channel).round }
       cmyk_arr.size == 5 ? rgb + [cmyk_arr.last] : rgb
     end
+
+    private
 
     #========= helper methods for RGB to HSL/HSB/HSV =======================
 

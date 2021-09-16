@@ -1,7 +1,8 @@
 # Decolmor
-[![Gem Version](https://badge.fury.io/rb/decolmor.svg)](https://badge.fury.io/rb/decolmor)
-[![Build Status](https://app.travis-ci.com/ChildrenofkoRn/decolmor.svg?token=ssJ5zvqjK7iZ4F1TaeQn&branch=main)](https://app.travis-ci.com/ChildrenofkoRn/decolmor)
-[![codecov](https://codecov.io/gh/ChildrenofkoRn/decolmor/branch/main/graph/badge.svg?token=5P4OQUXC3N)](https://codecov.io/gh/ChildrenofkoRn/decolmor)
+[![badge-gem][badge-gem]][gem]
+[![badge-build][badge-build]][github-workflow]
+[![badge-codecov][badge-codecov]][codecov]
+[![badge-license][badge-license]][license]
 
 Gem for converting color spaces from/to: HEX/RGB/HSL/HSV/HSB/CMYK  
 The Alpha channel (transparency) is supported.  
@@ -153,3 +154,14 @@ The results when rounded to an integer will be the same as when using graphics e
 MIT License  
 Copyright (c) 2021 ChildrenofkoRn  
 [LICENSE](https://github.com/ChildrenofkoRn/decolmor/blob/master/LICENSE)
+
+
+
+  [gem]: https://badge.fury.io/rb/decolmor "gem version"
+  [badge-gem]: https://badge.fury.io/rb/decolmor.svg "gem version"
+  [codecov]: https://codecov.io/gh/ChildrenofkoRn/decolmor "codecov"
+  [badge-codecov]: https://codecov.io/gh/ChildrenofkoRn/decolmor/branch/main/graph/badge.svg?token=5P4OQUXC3N "codecov"
+  [github-workflow]: https://github.com/ChildrenofkoRn/decolmor/actions/workflows/build.yml "build"
+  [badge-build]: https://github.com/ChildrenofkoRn/decolmor/actions/workflows/build.yml/badge.svg "build status"
+  [license]: https://github.com/ChildrenofkoRn/decolmor/blob/main/LICENSE "MIT"
+  [badge-license]: https://img.shields.io/github/license/ChildrenofkoRn/decolmor?color=%23239393 "license"
