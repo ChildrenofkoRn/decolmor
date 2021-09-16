@@ -24,9 +24,9 @@ Gem::Specification.new do |spec|
   if spec.respond_to?(:metadata)
     spec.metadata = {
       "homepage_uri"      => spec.homepage.to_s,
-      "news_uri"          => "#{spec.homepage}/blob/master/NEWS.md",
-      "changelog_uri"     => "#{spec.homepage}/blob/master/CHANGELOG.md",
-      "documentation_uri" => "#{spec.homepage}/blob/master/README.md",
+      "news_uri"          => "#{spec.homepage}/blob/main/NEWS.md",
+      "changelog_uri"     => "#{spec.homepage}/blob/main/CHANGELOG.md",
+      "documentation_uri" => "#{spec.homepage}/blob/main/README.md",
       "bug_tracker_uri"   => "#{spec.homepage}/issues",
       "source_code_uri"   => spec.homepage.to_s
     }

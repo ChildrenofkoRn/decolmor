@@ -8,12 +8,4 @@ module Decolmor
   # for lossless conversion HSL <==> HSV (HSB) better to use round 2
   #
   HSX_ROUND = 1
-
-  class << self
-    attr_writer :hsx_round
-
-    def hsx_round
-      @hsx_round ||= HSX_ROUND
-    end
-  end
 end

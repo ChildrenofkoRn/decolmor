@@ -32,30 +32,40 @@ gem install decolmor
 require 'decolmor'
 
 rgb = [29, 128, 86]
-Decolmor::rgb_to_hsb(rgb)
+Decolmor.rgb_to_hsb(rgb)
 => [154.5, 77.3, 50.2]
 ```
+or `include` into class:
+```ruby
+class SomeClass
+  include Decolmor
+end
+SomeClass.rgb_to_hsb(rgb)
+=> [154.5, 77.3, 50.2]
+```
+Gem methods will be available as class methods.
+
 ## Rounding for HSL/HSV/HSB/CMYK
 By default, rounding 1 is used to convert to HSL/HSV/HSB/CMYK.  
 This is enough to loselessly convert RGB -> HSL/HSV/HSB/CMYK -> RGB:
 ```ruby
     rgb = [224, 23, 131]  
-    hsl = Decolmor::rgb_to_hsl(rgb)  # => [327.8, 81.4, 48.4]
-    hsv = Decolmor::rgb_to_hsv(rgb)  # => [327.8, 89.7, 87.8]
-    Decolmor::hsv_to_rgb(hsv)  # => [224, 23, 131]
-    Decolmor::hsl_to_rgb(hsl)  # => [224, 23, 131]
+    hsl = Decolmor.rgb_to_hsl(rgb)  # => [327.8, 81.4, 48.4]
+    hsv = Decolmor.rgb_to_hsv(rgb)  # => [327.8, 89.7, 87.8]
+    Decolmor.hsv_to_rgb(hsv)  # => [224, 23, 131]
+    Decolmor.hsl_to_rgb(hsl)  # => [224, 23, 131]
 ```
 If you convert between HSL <==> HSV (HSB) with a rounding of 2, you can get more accurate results.  
 This can also be useful if you use HSL/HSB for intermediate changes and then go back to RGB.  
 You can change rounding globally:
 ```ruby
-    Decolmor::hsx_round = 2
-    Decolmor::rgb_to_hsl(rgb)  # => [154.55, 63.06, 30.78]
-    Decolmor::hsx_round        # => 2
+    Decolmor.hsx_round = 2
+    Decolmor.rgb_to_hsl(rgb)  # => [154.55, 63.06, 30.78]
+    Decolmor.hsx_round        # => 2
 ```
 You can also specify rounding as a second argument when calling the method:
 ```ruby
-    Decolmor::rgb_to_hsl(rgb, 3)  # => [154.545, 63.057, 30.784]
+    Decolmor.rgb_to_hsl(rgb, 3)  # => [154.545, 63.057, 30.784]
 ```
 In this case, the global rounding will be ignored.
 If you need to get integers, use 0.
@@ -69,12 +79,12 @@ If you need to get integers, use 0.
 When converting from HEX to RGBA Alpha channel is converted to a value from the range `0..1` with rounding 3:  
  - 3 digits is enough for a lossless conversion `0..255` -> `0..1` -> `0..255`
 ```ruby
-    Decolmor::hex_to_rgb('#19988BB8')  # => [25, 152, 139, 0.722]
+    Decolmor.hex_to_rgb('#19988BB8')  # => [25, 152, 139, 0.722]
 ```
 Consequently, when converting to HEX from RGBA, Alpha from the range `0..1` is assumed.  
 You can also set rounding for Alpha channel as a second argument:
 ```ruby
-    Decolmor::hex_to_rgb('#19988BB8', 2)  # => [25, 152, 139, 0.72]
+    Decolmor.hex_to_rgb('#19988BB8', 2)  # => [25, 152, 139, 0.72]
 ```
 This only works for converting HEX to RGBA.  
 In other cases (conversions between RGB/HSL/HSV/HSB/CMYK) Alpha channel remains unchanged.
@@ -84,8 +94,8 @@ HSB is an alternative name for HSV, it is the same thing.
 However, for convenience, aliasing methods are made for HSB from HSV.
 ```ruby
     rgb = [255, 109, 55]  
-    Decolmor::rgb_to_hsv(rgb)  # => [16.2, 78.4, 100.0]
-    Decolmor::rgb_to_hsb(rgb)  # => [16.2, 78.4, 100.0]
+    Decolmor.rgb_to_hsv(rgb)  # => [16.2, 78.4, 100.0]
+    Decolmor.rgb_to_hsb(rgb)  # => [16.2, 78.4, 100.0]
 ```
 ## HSL/HSV/HSB to RGB conversion
 HSL/HSV/HSB to RGB conversion has two implementations, the gem includes both:
