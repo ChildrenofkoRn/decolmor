@@ -8,6 +8,8 @@ Gem for converting color spaces from/to: HEX/RGB/HSL/HSV/HSB/CMYK
 The Alpha channel (transparency) is supported.  
 There is also a simple RGB generator.  
 
+[News][news] . [Recent releases][releases] . [Changelog][changelog] . [Wiki][wiki]
+
 ## Install
 Add the following line to Gemfile:
 
@@ -46,6 +48,8 @@ SomeClass.rgb_to_hsb(rgb)
 ```
 Gem methods will be available as class methods.
 
+See [WIKI](https://github.com/ChildrenofkoRn/decolmor/wiki/Examples) for more examples.
+
 ## Rounding for HSL/HSV/HSB/CMYK
 By default, rounding 1 is used to convert to HSL/HSV/HSB/CMYK.  
 This is enough to loselessly convert RGB -> HSL/HSV/HSB/CMYK -> RGB:
@@ -80,9 +84,15 @@ If you need to get integers, use 0.
 When converting from HEX to RGBA Alpha channel is converted to a value from the range `0..1` with rounding 3:  
  - 3 digits is enough for a lossless conversion `0..255` -> `0..1` -> `0..255`
 ```ruby
-    Decolmor.hex_to_rgb('#19988BB8')  # => [25, 152, 139, 0.722]
+    Decolmor.hex_to_rgb('#19988BB8')           # => [25, 152, 139, 0.722]
+    Decolmor.hex_to_rgb([25, 152, 139, 0.722)  # => "#19988BB8"
 ```
 Consequently, when converting to HEX from RGBA, Alpha from the range `0..1` is assumed.  
+But you can set range 0..255 for alpha channel:
+```ruby
+    Decolmor.hex_to_rgb('#19988BB8', alpha_255: true)          # => [25, 152, 139, 184]
+    Decolmor.rgb_to_hex([25, 152, 139, 184], alpha_255: true)  # => "#19988BB8"
+```
 You can also set rounding for Alpha channel as a second argument:
 ```ruby
     Decolmor.hex_to_rgb('#19988BB8', 2)  # => [25, 152, 139, 0.72]
@@ -109,7 +119,7 @@ or
 - hsv_to_rgb_alt
 - hsb_to_rgb_alt
 
-The results of the two implementations are identical, but the alternative versions (postfix `_alt`) are ~1.6X slower.
+The results of the two implementations are identical, but the alternative versions (postfix `_alt`) are ~1.35X slower.
 
 ## Attention for CMYK !
 Unfortunately, there is no simple formula for linear RGB to/from CMYK conversion.  
@@ -117,7 +127,7 @@ This implementation is a simplified/dirty/simulation.
 CMYK is used for printing and the correct conversion will be non-linear, based on the color profile for the particular printing device.  
 Therefore, the CMYK conversion results will not match Adobe products.  
 **BUT:**  
-Conversion to HEX/RGB/HSL/HSV/HSB is simple and is described by formulas.  
+Conversion from/to HEX/RGB/HSL/HSV/HSB is simple and is described by formulas.  
 Read more: https://en.wikipedia.org/wiki/HSL_and_HSV  
 The results when rounded to an integer will be the same as when using graphics editors, such as CorelDRAW or Adobe Photoshop.
 
@@ -137,7 +147,7 @@ The results when rounded to an integer will be the same as when using graphics e
    - hsl_to_rgb
    - hsv_to_rgb
    - hsb_to_rgb
- - Alternative implementation HSL/HSV/HSB to RGB(A) (~1.6X slower)
+ - Alternative implementation HSL/HSV/HSB to RGB(A) (a little slower)
    - hsl_to_rgb_alt
    - hsv_to_rgb_alt
    - hsb_to_rgb_alt
@@ -162,6 +172,12 @@ Copyright (c) 2021 ChildrenofkoRn
   [codecov]: https://codecov.io/gh/ChildrenofkoRn/decolmor "codecov"
   [badge-codecov]: https://codecov.io/gh/ChildrenofkoRn/decolmor/branch/main/graph/badge.svg?token=5P4OQUXC3N "codecov"
   [github-workflow]: https://github.com/ChildrenofkoRn/decolmor/actions/workflows/build.yml "build"
-  [badge-build]: https://github.com/ChildrenofkoRn/decolmor/actions/workflows/build.yml/badge.svg "build status"
+  [badge-build]: https://img.shields.io/github/workflow/status/ChildrenofkoRn/decolmor/build/main "build status"
   [license]: https://github.com/ChildrenofkoRn/decolmor/blob/main/LICENSE "MIT"
   [badge-license]: https://img.shields.io/github/license/ChildrenofkoRn/decolmor?color=%23239393 "license"
+
+
+  [changelog]: https://github.com/ChildrenofkoRn/decolmor/blob/main/CHANGELOG.md "changelog"
+  [news]: https://github.com/ChildrenofkoRn/decolmor/blob/main/NEWS.md "news"
+  [releases]: https://github.com/ChildrenofkoRn/decolmor/releases "releases"
+  [wiki]: https://github.com/ChildrenofkoRn/decolmor/wiki "wiki"

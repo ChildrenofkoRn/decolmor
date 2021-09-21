@@ -68,6 +68,14 @@ RSpec.describe Decolmor do
         end
       end
 
+      it "set range 0..255 for alpha channel" do
+        color = colors.keys.sample
+        alphas.each_pair do |hex_alpha, alpha|
+          hex = format('%s%s', color, hex_alpha)
+          expect( Decolmor.hex_to_rgb(hex, alpha_255: true).last ).to eq alpha[:rgb_255]
+        end
+      end
+
       it "HEX w alpha channel and w/o prefix # to RGBA" do
         color = colors.keys.sample
 
@@ -100,10 +108,20 @@ RSpec.describe Decolmor do
       it "RGBA converts to HEX w alpha" do
         color = colors.keys.sample
 
-        alphas.each_pair do |hex, alpha|
-          hex = format('%s%s', color, hex)
+        alphas.each_pair do |hex_alpha, alpha|
+          hex = format('%s%s', color, hex_alpha)
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor.rgb_to_hex(rgba) ).to eq hex
+        end
+      end
+
+      it "set range 0..255 for alpha channel" do
+        color = colors.keys.sample
+
+        alphas.each_pair do |hex_alpha, alpha|
+          hex = format('%s%s', color, hex_alpha)
+          rgba = colors[color][:rgb] + [alpha[:rgb_255]]
+          expect( Decolmor.rgb_to_hex(rgba, alpha_255: true) ).to eq hex
         end
       end
     end
@@ -145,7 +163,7 @@ RSpec.describe Decolmor do
 
       it "alpha channel pass to HSL unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor.rgb_to_hsl(rgba).last ).to eq alpha[:rgb]
         end
@@ -160,7 +178,7 @@ RSpec.describe Decolmor do
 
       it "setting rounding doesn't affect alpha channel" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           # alpha shouldn't be rounded because its range is 0..1
           # if that did happen, we would get 0 or 1 instead of the normal value
@@ -182,7 +200,7 @@ RSpec.describe Decolmor do
 
       it "alpha channel pass to HSV unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor.rgb_to_hsv(rgba).last ).to eq alpha[:rgb]
         end
@@ -196,7 +214,7 @@ RSpec.describe Decolmor do
 
       it "setting rounding doesn't affect alpha channel" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor.rgb_to_hsv(rgba, 0).last ).to eq alpha[:rgb]
         end
@@ -217,14 +235,14 @@ RSpec.describe Decolmor do
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSL converts to RGB" do
-        colors.each_pair do |hex, values|
+        colors.each_pair do |_hex, values|
           expect( Decolmor.hsl_to_rgb(values[:hsl]) ).to eq values[:rgb]
         end
       end
 
       it "alpha channel pass to RGB unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, values|
+        alphas.each_pair do |_hex_alpha, values|
           hsla = colors[color][:hsl] + [values[:rgb]]
           expect( Decolmor.hsl_to_rgb(hsla).last ).to eq values[:rgb]
         end
@@ -236,14 +254,14 @@ RSpec.describe Decolmor do
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSV converts to RGB" do
-        colors.each_pair do |hex, values|
+        colors.each_pair do |_hex, values|
           expect( Decolmor.hsv_to_rgb(values[:hsv]) ).to eq values[:rgb]
         end
       end
 
       it "alpha channel pass to RGB unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, values|
+        alphas.each_pair do |_hex_alpha, values|
           hsva = colors[color][:hsv] + [values[:rgb]]
           expect( Decolmor.hsv_to_rgb(hsva).last ).to eq values[:rgb]
         end
@@ -264,16 +282,24 @@ RSpec.describe Decolmor do
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSL converts to RGB" do
-        colors.each_pair do |hex, values|
+        colors.each_pair do |_hex, values|
           expect( Decolmor.hsl_to_rgb_alt(values[:hsl]) ).to eq values[:rgb]
         end
       end
 
       it "alpha channel pass to RGB unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, values|
+        alphas.each_pair do |_hex_alpha, values|
           hsla = colors[color][:hsl] + [values[:rgb]]
           expect( Decolmor.hsl_to_rgb_alt(hsla).last ).to eq values[:rgb]
+        end
+      end
+
+      it "if hue not a range member 0..360 return identical RGB values (colorless)" do
+        colors.each_pair do |hex, values|
+          hsl = values[:hsl]
+          hsl[0] += 360
+          expect( Decolmor.hsl_to_rgb_alt(hsl).uniq.size ).to eq 1
         end
       end
     end
@@ -283,16 +309,24 @@ RSpec.describe Decolmor do
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSV converts to RGB" do
-        colors.each_pair do |hex, values|
+        colors.each_pair do |_hex, values|
           expect( Decolmor.hsv_to_rgb_alt(values[:hsv]) ).to eq values[:rgb]
         end
       end
 
       it "alpha channel pass to RGB unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, values|
+        alphas.each_pair do |_hex_alpha, values|
           hsva = colors[color][:hsv] + [values[:rgb]]
           expect( Decolmor.hsv_to_rgb_alt(hsva).last ).to eq values[:rgb]
+        end
+      end
+
+      it "if hue not a range member 0..360 return identical RGB values (colorless)" do
+        colors.each_pair do |_hex, values|
+          hsl = values[:hsl]
+          hsl[0] -= 360
+          expect( Decolmor.hsl_to_rgb_alt(hsl).uniq.size ).to eq 1
         end
       end
     end
@@ -320,21 +354,21 @@ RSpec.describe Decolmor do
 
       it "alpha channel pass to HSV unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           hsla = colors[color][:hsl] + [alpha[:rgb]]
           expect( Decolmor.hsl_to_hsv(hsla).last ).to eq alpha[:rgb]
         end
       end
 
       it "you can set rounding for resulting HSV values (default = 1)" do
-        colors.each_pair do |hex, values|
+        colors.each_pair do |_hex, values|
           expect( Decolmor.hsl_to_hsv(values[:hsl], 0) ).to eq values[:hsv].map(&:round)
         end
       end
 
       it "setting rounding doesn't affect alpha channel" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           hsla = colors[color][:hsl] + [alpha[:rgb]]
           expect( Decolmor.hsl_to_hsv(hsla, 0).last ).to eq alpha[:rgb]
         end
@@ -353,7 +387,7 @@ RSpec.describe Decolmor do
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSV converts to HSL" do
-        colors.each_pair do |hex_, values|
+        colors.each_pair do |_hex, values|
           hsl = values[:hsl].map { |value| value.round(1) }
           expect( Decolmor.hsv_to_hsl(values[:hsv]) ).to eq hsl
         end
@@ -361,21 +395,21 @@ RSpec.describe Decolmor do
 
       it "alpha channel pass to HSL unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           hsva = colors[color][:hsv] + [alpha[:rgb]]
           expect( Decolmor.hsv_to_hsl(hsva).last ).to eq alpha[:rgb]
         end
       end
 
       it "you can set rounding for resulting HSL values (default = 1)" do
-        colors.each_pair do |hex, values|
+        colors.each_pair do |_hex, values|
           expect( Decolmor.hsv_to_hsl(values[:hsv], 0) ).to eq values[:hsl].map(&:round)
         end
       end
 
       it "setting rounding doesn't affect alpha channel" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex, alpha|
           hsva = colors[color][:hsv] + [alpha[:rgb]]
           expect( Decolmor.hsv_to_hsl(hsva, 0).last ).to eq alpha[:rgb]
         end
@@ -405,7 +439,7 @@ RSpec.describe Decolmor do
 
       it "alpha channel pass to HSL unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor.rgb_to_cmyk(rgba).last ).to eq alpha[:rgb]
         end
@@ -419,7 +453,7 @@ RSpec.describe Decolmor do
 
       it "setting rounding doesn't affect alpha channel" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, alpha|
+        alphas.each_pair do |_hex_alpha, alpha|
           rgba = colors[color][:rgb] + [alpha[:rgb]]
           expect( Decolmor.rgb_to_cmyk(rgba, 0).last ).to eq alpha[:rgb]
         end
@@ -438,7 +472,7 @@ RSpec.describe Decolmor do
 
       it "alpha channel pass to RGB unchanged" do
         color = colors.keys.sample
-        alphas.each_pair do |hex_, values|
+        alphas.each_pair do |_hex_alpha, values|
           cmyka = colors[color][:cmyk] + [values[:rgb]]
           expect( Decolmor.cmyk_to_rgb(cmyka).last ).to eq values[:rgb]
         end

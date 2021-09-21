@@ -21,7 +21,7 @@ module Decolmor
 
     #========= HEX <==> RGB(A) =============================================
 
-    def hex_to_rgb(hex, alpha_round = 3)
+    def hex_to_rgb(hex, alpha_round = 3, alpha_255: false)
       hex = hex.gsub('#','')
       hex = if [3, 4].include? hex.length
               hex.chars.map{ |char| char * 2 }
@@ -29,13 +29,20 @@ module Decolmor
               hex.scan(/../)
             end
       rgb = hex.map(&:hex)
-      rgb.size == 4 ? rgb + [(rgb.delete_at(3) / 255.to_f).round(alpha_round)] : rgb
+      if rgb.size == 4
+        rgb[3] = (rgb[3] / 255.to_f).round(alpha_round) unless alpha_255
+      end
+
+      rgb
     end
 
-    def rgb_to_hex(rgb)
-      template = rgb.size == 3 ? "#%02X%02X%02X" : "#%02X%02X%02X%02X"
-      rgb = rgb[0..2] + [(rgb[3] * 255).round] if rgb.size == 4
-      template % rgb
+    def rgb_to_hex(rgb, alpha_255: false)
+      if rgb.size == 3
+        "#%02X%02X%02X" % rgb
+      else
+        rgb[3] = (rgb[3] * 255).round unless alpha_255
+        "#%02X%02X%02X%02X" % rgb
+      end
     end
 
     #=======================================================================
@@ -103,14 +110,14 @@ module Decolmor
 
       # calculation intermediate values
       a = saturation * [lightness, 1 - lightness].min
-      converter = proc do |n|
-        k = (n + hue / 30) % 12
-        lightness - a * [-1, [k - 3, 9 - k, 1].min].max
-      end
 
       # calculation rgb & scaling into range 0..255
       rgb = [0, 8, 4]
-      rgb.map! { |channel| (converter.call(channel) * 255).round }
+      rgb.map! do |channel|
+        k = (channel + hue / 30) % 12
+        channel = lightness - a * [-1, [k - 3, 9 - k, 1].min].max
+        (channel * 255).round
+      end
       alpha.nil? ? rgb : rgb + [alpha]
     end
 
@@ -120,15 +127,13 @@ module Decolmor
       saturation /= 100
       value /= 100
 
-      # calculation intermediate values
-      converter = proc do |n|
-        k = (n + hue / 60) % 6
-        value - value * saturation * [0, [k, 4 - k, 1].min].max
-      end
-
       # calculation rgb & scaling into range 0..255
       rgb = [5, 3, 1]
-      rgb.map! { |channel| (converter.call(channel) * 255).round }
+      rgb.map! do |channel|
+        k = (channel + hue / 60) % 6
+        channel = value - value * saturation * [0, [k, 4 - k, 1].min].max
+        (channel * 255).round
+      end
       alpha.nil? ? rgb : rgb + [alpha]
     end
 
@@ -146,22 +151,11 @@ module Decolmor
       chroma = (1 - (2 * lightness - 1).abs) * saturation
       hue /= 60
       x = chroma * (1 - (hue % 2 - 1).abs)
-
-      # possible RGB points
-      points = [[chroma, x, 0],
-                [x, chroma, 0],
-                [0, chroma, x],
-                [0, x, chroma],
-                [x, 0, chroma],
-                [chroma, 0, x]]
-      # point selection based on entering HUE input in range
-      point = points.each_with_index.detect { |rgb_, n| (n..n + 1).include? hue }&.first
-      # if point == nil (hue undefined)
-      rgb = point || [0, 0, 0]
+      point = get_rgb_point(hue, chroma, x)
 
       # calculation rgb & scaling into range 0..255
       m = lightness - chroma / 2
-      rgb.map! { |channel| ((channel + m) * 255).round }
+      rgb = point.map { |channel| ((channel + m) * 255).round }
       alpha.nil? ? rgb : rgb + [alpha]
     end
 
@@ -175,22 +169,11 @@ module Decolmor
       chroma = value * saturation
       hue /= 60
       x = chroma * (1 - (hue % 2 - 1).abs)
-
-      # possible RGB points
-      points = [[chroma, x, 0],
-                [x, chroma, 0],
-                [0, chroma, x],
-                [0, x, chroma],
-                [x, 0, chroma],
-                [chroma, 0, x]]
-      # point selection based on entering HUE input in range
-      point = points.each_with_index.detect { |rgb_, n| (n * (1 / 100.000)...n + 1).include? hue }&.first
-      # if point == nil (hue undefined)
-      rgb = point || [0, 0, 0]
+      point = get_rgb_point(hue, chroma, x)
 
       # calculation rgb & scaling into range 0..255
       m = value - chroma
-      rgb.map! { |channel| ((channel + m) * 255).round }
+      rgb = point.map { |channel| ((channel + m) * 255).round }
       alpha.nil? ? rgb : rgb + [alpha]
     end
 
@@ -293,9 +276,25 @@ module Decolmor
               # blue is max
               (red - green) / chroma + 4
             end
-      hue *= 60
-      # make negative HUEs positive behind 360°
-      0 <= hue ? hue : hue + 360
+      hue * 60
+
+      # HUE will never leave the 0..360 range when RGB is within 0..255
+      # make negative HUEs positive
+      # 0 <= hue ? hue : hue + 360
+    end
+
+    # possible RGB points
+    # point selection based on entering HUE input in range
+    def get_rgb_point(hue, chroma, x)
+      case hue
+      when 0...1 then [chroma, x, 0]
+      when 1...2 then [x, chroma, 0]
+      when 2...3 then [0, chroma, x]
+      when 3...4 then [0, x, chroma]
+      when 4...5 then [x, 0, chroma]
+      when 5...6 then [chroma, 0, x]
+      else [0, 0, 0]
+      end
     end
   end
 
