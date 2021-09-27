@@ -19,7 +19,7 @@ RSpec.describe Decolmor do
       Decolmor.hsx_round = 1
     end
 
-    let(:colors) { FactoryBot.build(:colors_map, round: 2) }
+    let(:colors) { FactoryBot.build(:colors, round: 2) }
 
     it ".hsx_round by default 1" do
       expect( Decolmor.hsx_round ).to eq 1
@@ -32,7 +32,7 @@ RSpec.describe Decolmor do
 
   context 'HEX <==> RGB(A)' do
     describe ".hex_to_rgb" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HEX w prefix # to RGB" do
@@ -96,7 +96,7 @@ RSpec.describe Decolmor do
     end
 
     describe ".rgb_to_hex" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "RGB converts to HEX" do
@@ -127,7 +127,7 @@ RSpec.describe Decolmor do
     end
   end
 
-  
+
   context 'simple generator RGB, you can set any channel(s)' do
     describe ".new_rgb" do
       it "generate RGB with values into range 0..255" do
@@ -152,7 +152,7 @@ RSpec.describe Decolmor do
 
   context 'RGB(A) to HSL/HSV/HSB' do
     describe ".rgb_to_hsl" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "RGB converts to HSL" do
@@ -188,9 +188,9 @@ RSpec.describe Decolmor do
     end
 
     describe ".rgb_to_hsv" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
-      let(:colors_round_2) { FactoryBot.build(:colors_map, round: 2) }
+      let(:colors_round_2) { FactoryBot.build(:colors, round: 2) }
 
       it "RGB converts to HSV" do
         colors.each_pair do |hex, values|
@@ -231,7 +231,7 @@ RSpec.describe Decolmor do
 
   context 'HSL/HSV/HSB to RGB(A)' do
     describe ".hsl_to_rgb" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSL converts to RGB" do
@@ -250,7 +250,7 @@ RSpec.describe Decolmor do
     end
 
     describe ".hsv_to_rgb" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSV converts to RGB" do
@@ -278,7 +278,7 @@ RSpec.describe Decolmor do
 
   context 'Alternative implementation HSL/HSV/HSB to RGB(A)' do
     describe ".hsl_to_rgb_alt" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSL converts to RGB" do
@@ -295,17 +295,22 @@ RSpec.describe Decolmor do
         end
       end
 
-      it "if hue not a range member 0..360 return identical RGB values (colorless)" do
-        colors.each_pair do |hex, values|
-          hsl = values[:hsl]
-          hsl[0] += 360
-          expect( Decolmor.hsl_to_rgb_alt(hsl).uniq.size ).to eq 1
-        end
+      it "if hue == 360 we get valid values" do
+        rgb_int = [123, 1, 2]
+        # the resulting value from hsi with rounding 0 to an integer (hue will be 360)
+        # as 360/60 does not get_rgb_point in any of the ranges 0...1 or 5...6
+        # so in the method we use (hue % 360)
+        # at the same time solving if hue is not in the 0..360 range
+        # the fact that rgb_int and rgb_out differ is normal,
+        # because with integer HSL values its impossible to losslessly convert back to RGB
+        rgb_out = [121, 1, 1]
+        hsv = Decolmor.rgb_to_hsl(rgb_int, 0)
+        expect( Decolmor.hsl_to_rgb_alt(hsv) ).to eq rgb_out
       end
     end
 
     describe ".hsv_to_rgb_alt" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSV converts to RGB" do
@@ -322,12 +327,17 @@ RSpec.describe Decolmor do
         end
       end
 
-      it "if hue not a range member 0..360 return identical RGB values (colorless)" do
-        colors.each_pair do |_hex, values|
-          hsl = values[:hsl]
-          hsl[0] -= 360
-          expect( Decolmor.hsl_to_rgb_alt(hsl).uniq.size ).to eq 1
-        end
+      it "if hue == 360 we get valid values" do
+        rgb_int = [128, 7, 8]
+        # the resulting value from hsi with rounding 0 to an integer (hue will be 360)
+        # as 360/60 does not get_rgb_point in any of the ranges 0...1 or 5...6
+        # so in the method we use (hue % 360)
+        # at the same time solving if hue is not in the 0..360 range
+        # the fact that rgb_int and rgb_out differ is normal,
+        # because with integer HSV values its impossible to losslessly convert back to RGB
+        rgb_out = [128, 6, 6]
+        hsv = Decolmor.rgb_to_hsv(rgb_int, 0)
+        expect( Decolmor.hsv_to_rgb_alt(hsv) ).to eq rgb_out
       end
     end
 
@@ -339,10 +349,79 @@ RSpec.describe Decolmor do
   end
 
 
+  context 'RGB <==> HSI' do
+    describe ".rgb_to_hsi" do
+      let(:colors) { FactoryBot.build(:colors) }
+      let(:alphas) { FactoryBot.build(:alpha) }
+      let(:colors_r3) { FactoryBot.build(:colors, round: 3) }
+
+      it "RGB converts to hsi" do
+        colors.each_pair do |hex, values|
+          expect( Decolmor.rgb_to_hsi(values[:rgb]) ).to eq values[:hsi]
+        end
+      end
+
+      it "alpha channel pass to hsi unchanged" do
+        color = colors.keys.sample
+        alphas.each_pair do |_hex_alpha, alpha|
+          rgba = colors[color][:rgb] + [alpha[:rgb]]
+          expect( Decolmor.rgb_to_hsi(rgba).last ).to eq alpha[:rgb]
+        end
+      end
+
+      it "you can set rounding for resulting hsi values (default = 1)" do
+        colors_r3.each_pair do |hex, values|
+          expect( Decolmor.rgb_to_hsi(values[:rgb], 3) ).to eq values[:hsi]
+        end
+      end
+
+      it "setting rounding doesn't affect alpha channel" do
+        color = colors.keys.sample
+        alphas.each_pair do |_hex_alpha, alpha|
+          rgba = colors[color][:rgb] + [alpha[:rgb]]
+          expect( Decolmor.rgb_to_hsi(rgba, 0).last ).to eq alpha[:rgb]
+        end
+      end
+    end
+
+    describe ".hsi_to_rgb" do
+      let(:colors) { FactoryBot.build(:colors) }
+      let(:alphas) { FactoryBot.build(:alpha) }
+
+      it "hsi converts to RGB" do
+        colors.each_pair do |_hex, values|
+          expect( Decolmor.hsi_to_rgb(values[:hsi]) ).to eq values[:rgb]
+        end
+      end
+
+      it "alpha channel pass to RGB unchanged" do
+        color = colors.keys.sample
+        alphas.each_pair do |_hex_alpha, values|
+          hsia = colors[color][:hsi] + [values[:rgb]]
+          expect( Decolmor.hsi_to_rgb(hsia).last ).to eq values[:rgb]
+        end
+      end
+
+      it "if hue == 360 we get valid values" do
+        rgb_int = [255, 11, 13]
+        # the resulting value from hsi with rounding 0 to an integer (hue will be 360)
+        # as 360/60 does not get_rgb_point in any of the ranges 0...1 or 5...6
+        # so in the method we use (hue % 360)
+        # at the same time solving if hue is not in the 0..360 range
+        # the fact that rgb_int and rgb_out differ is normal,
+        # because with integer HSI values its impossible to losslessly convert back to RGB
+        rgb_out = [253, 11, 11]
+        hsi = Decolmor.rgb_to_hsi(rgb_int, 0)
+        expect( Decolmor.hsi_to_rgb(hsi) ).to eq rgb_out
+      end
+    end
+  end
+
+
   context 'HSL <==> HSV (HSB)' do
     describe ".hsl_to_hsv" do
       # as for lossless conversion need to use float value with 2 decimal places
-      let(:colors) { FactoryBot.build(:colors_map, round: 2) }
+      let(:colors) { FactoryBot.build(:colors, round: 2) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSL converts to HSV" do
@@ -383,7 +462,7 @@ RSpec.describe Decolmor do
 
     describe ".hsv_to_hsl" do
       # as for lossless conversion need to use float value with 2 decimal places
-      let(:colors) { FactoryBot.build(:colors_map, round: 2) }
+      let(:colors) { FactoryBot.build(:colors, round: 2) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "HSV converts to HSL" do
@@ -426,7 +505,7 @@ RSpec.describe Decolmor do
 
   context 'RGB(A) <==> CMYK' do
     describe ".rgb_to_cmyk" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "RGB converts to CMYK" do
@@ -461,7 +540,7 @@ RSpec.describe Decolmor do
     end
 
     describe ".cmyk_to_rgb" do
-      let(:colors) { FactoryBot.build(:colors_map) }
+      let(:colors) { FactoryBot.build(:colors) }
       let(:alphas) { FactoryBot.build(:alpha) }
 
       it "CMYK converts to RGB" do
@@ -476,6 +555,165 @@ RSpec.describe Decolmor do
           cmyka = colors[color][:cmyk] + [values[:rgb]]
           expect( Decolmor.cmyk_to_rgb(cmyka).last ).to eq values[:rgb]
         end
+      end
+    end
+  end
+
+
+  context 'HEX <==> HSL/HSV/HSB/HSI/CMYK' do
+    describe ".hex_to_hsl" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hex_to_rgb & rgb_to_hsl" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: false}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hsl).with(values[:rgb], Decolmor.hsx_round)
+        Decolmor.hex_to_hsl(hex)
+      end
+
+      it "w additional args (rounding, alpha_255) call hex_to_rgb & rgb_to_hsl" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: true}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hsl).with(values[:rgb], 2)
+        Decolmor.hex_to_hsl(hex, 2, alpha_255: true)
+      end
+    end
+
+    describe ".hsl_to_hex" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hsl_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:hsl_to_rgb).with(values[:hsl]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: false})
+        Decolmor.hsl_to_hex(values[:hsl])
+      end
+
+      it "w additional args (rounding, alpha_255) call hsl_to_rgb & rgb_to_hex" do
+        _hex, values = color.first
+        expect(Decolmor).to receive(:hsl_to_rgb).with(values[:hsl]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: true})
+        Decolmor.hsl_to_hex(values[:hsl], alpha_255: true)
+      end
+    end
+
+    describe ".hex_to_hsv" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hex_to_rgb & rgb_to_hsv" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: false}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hsv).with(values[:rgb], Decolmor.hsx_round)
+        Decolmor.hex_to_hsv(hex)
+      end
+
+      it "w additional args (rounding, alpha_255) call hex_to_rgb & rgb_to_hsv" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: true}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hsv).with(values[:rgb], 2)
+        Decolmor.hex_to_hsv(hex, 2, alpha_255: true)
+      end
+    end
+
+    describe ".hsv_to_hex" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hsv_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:hsv_to_rgb).with(values[:hsv]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: false})
+        Decolmor.hsv_to_hex(values[:hsv])
+      end
+
+      it "w additional args (rounding, alpha_255) call hsv_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:hsv_to_rgb).with(values[:hsv]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: true})
+        Decolmor.hsv_to_hex(values[:hsv], alpha_255: true)
+      end
+    end
+
+    describe ".hex_to_hsb" do
+      it "alias .rgb_to_hsv" do
+        expect( Decolmor.method(:hex_to_hsb ).original_name).to eq(:hex_to_hsv)
+      end
+    end
+
+    describe ".hsb_to_hex" do
+      it "alias .rgb_to_hsv" do
+        expect( Decolmor.method(:hsb_to_hex ).original_name).to eq(:hsv_to_hex)
+      end
+    end
+
+    describe ".hex_to_hsi" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hex_to_rgb & rgb_to_hsi" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: false}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hsi).with(values[:rgb], Decolmor.hsx_round)
+        Decolmor.hex_to_hsi(hex)
+      end
+
+      it "w additional args (rounding, alpha_255) call hex_to_rgb & rgb_to_hsi" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: true}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hsi).with(values[:rgb], 2)
+        Decolmor.hex_to_hsi(hex, 2, alpha_255: true)
+      end
+    end
+
+    describe ".hsi_to_hex" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hsi_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:hsi_to_rgb).with(values[:hsi]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: false})
+        Decolmor.hsi_to_hex(values[:hsi])
+      end
+
+      it "w additional args (rounding, alpha_255) call hsi_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:hsi_to_rgb).with(values[:hsi]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: true})
+        Decolmor.hsi_to_hex(values[:hsi], alpha_255: true)
+      end
+    end
+
+    describe ".hex_to_cmyk" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call hex_to_rgb & rgb_to_cmyk" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: false}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_cmyk).with(values[:rgb], Decolmor.hsx_round)
+        Decolmor.hex_to_cmyk(hex)
+      end
+
+      it "w additional args (rounding, alpha_255) call hex_to_rgb & rgb_to_cmyk" do
+        hex, values = *color.first
+        expect(Decolmor).to receive(:hex_to_rgb).with(hex, {alpha_255: true}).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_cmyk).with(values[:rgb], 2)
+        Decolmor.hex_to_cmyk(hex, 2, alpha_255: true)
+      end
+    end
+
+    describe ".cmyk_to_hex" do
+      let(:color) { FactoryBot.build(:colors, :one) }
+
+      it "call cmyk_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:cmyk_to_rgb).with(values[:cmyk]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: false})
+        Decolmor.cmyk_to_hex(values[:cmyk])
+      end
+
+      it "w additional args (rounding, alpha_255) call cmyk_to_rgb & rgb_to_hex" do
+        values = color.first.last
+        expect(Decolmor).to receive(:cmyk_to_rgb).with(values[:cmyk]).and_return(values[:rgb])
+        expect(Decolmor).to receive(:rgb_to_hex).with(values[:rgb], {alpha_255: true})
+        Decolmor.cmyk_to_hex(values[:cmyk], alpha_255: true)
       end
     end
   end

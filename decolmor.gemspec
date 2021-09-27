@@ -4,8 +4,8 @@ Gem::Specification.new do |spec|
   spec.name          = 'decolmor'
   spec.version       = Decolmor::VERSION
   spec.licenses      = ['MIT']
-  spec.summary       = "Converter color spaces from/to: HEX/RGB/HSL/HSV/HSB/CMYK"
-  spec.description   = "Converter color spaces from/to: HEX/RGB/HSL/HSV/HSB/CMYK.\n" \
+  spec.summary       = "Converter color spaces from/to: HEX/RGB/HSL/HSV/HSB/HSI/CMYK"
+  spec.description   = "Converter color spaces from/to: HEX/RGB/HSL/HSV/HSB/HSI/CMYK.\n" \
                        "The Alpha channel (transparency) is supported.\n" \
                        "There is also a simple RGB generator."
   spec.authors       = ["ChildrenofkoRn"]

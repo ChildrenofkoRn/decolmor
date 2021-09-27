@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 (September 27, 2021)
+
+  * Added support HSI <==> RGB  
+  > _RGB => HSI when rounding 1 ~2k RGB colors will be slightly different, 2 will fix this_
+  * Added methods for HEX <==> HSL/HSV/HSB/HSI/CMYK
+  * Fixed incorrect conversion to RGB when HUE == 360  
+    it was about the methods:
+    * hsl_to_rgb_alt
+    * hsv_to_rgb_alt  
+    and new:
+    * hsi_to_rgb
+
 ## 1.2.0 (September 21, 2021)
 
   * `.hex_to_rgb` now support a returnable alpha in range `0..255`  

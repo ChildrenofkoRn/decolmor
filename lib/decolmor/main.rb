@@ -148,8 +148,8 @@ module Decolmor
       lightness /= 100
 
       # calculation chroma & intermediate values
+      hue = (hue % 360) / 60
       chroma = (1 - (2 * lightness - 1).abs) * saturation
-      hue /= 60
       x = chroma * (1 - (hue % 2 - 1).abs)
       point = get_rgb_point(hue, chroma, x)
 
@@ -166,8 +166,8 @@ module Decolmor
       value /= 100
 
       # calculation chroma & intermediate values
+      hue = (hue % 360) / 60
       chroma = value * saturation
-      hue /= 60
       x = chroma * (1 - (hue % 2 - 1).abs)
       point = get_rgb_point(hue, chroma, x)
 
@@ -178,6 +178,56 @@ module Decolmor
     end
 
     alias_method :hsb_to_rgb_alt, :hsv_to_rgb_alt
+
+    #========= RGB <==> HSI ================================================
+
+    def rgb_to_hsi(rgb_arr, rounding = hsx_round)
+      # scaling RGB values into range 0..1
+      rgb = rgb_arr[0..2].map { |color| color / 255.to_f }
+      alpha = rgb_arr[3]
+
+      # calculation HSI values
+      hue = get_hue(*rgb)
+      intensity = rgb.sum / 3
+      saturation = intensity.zero? ? 0 : 1 - rgb.min / intensity
+
+      # scaling values to fill 0..100 interval
+      saturation *= 100
+      intensity *= 100
+
+      # rounding, drop Alpha if not set (nil)
+      hsi = [hue, saturation, intensity].map { |x| x.round(rounding) }
+      alpha.nil? ? hsi : hsi + [alpha]
+    end
+
+    def hsi_to_rgb(hsi_arr)
+      hue, saturation, intensity, alpha = hsi_arr.map(&:to_f)
+      # scaling values into range 0..1
+      saturation /= 100
+      intensity /= 100
+
+      # calculation chroma & intermediate values
+      #
+      # as 360/60 does not get_rgb_point in any of the ranges 0...1 or 5...6
+      # so in the method we use (hue % 360)
+      # at the same time solving if hue is not in the 0..360 range
+      hue = (hue % 360) / 60
+      z = 1 - (hue % 2 - 1).abs
+      chroma = (3 * intensity * saturation) / (1 + z)
+      x = chroma * z
+      point = get_rgb_point(hue, chroma, x)
+
+      # calculation rgb
+      m = intensity * (1 - saturation)
+      rgb = point.map { |channel|  channel + m }
+
+      # checking rgb on overrange 0..1
+      rgb = fix_overrange_rgb(rgb)
+      # scaling into range 0..255 & rounding
+      rgb.map! { |channel|  (channel * 255).round }
+
+      alpha.nil? ? rgb : rgb + [alpha]
+    end
 
     #========= HSL <==> HSV (HSB) ==========================================
 
@@ -246,9 +296,55 @@ module Decolmor
       cmyk_arr.size == 5 ? rgb + [cmyk_arr.last] : rgb
     end
 
+    #========= HEX <==> HSL/HSV/HSB/HSI ========================================
+
+    def hex_to_hsl(hex, rounding = hsx_round, alpha_255: false)
+      rgb = hex_to_rgb(hex, alpha_255: alpha_255)
+      rgb_to_hsl(rgb, rounding)
+    end
+
+    def hsl_to_hex(hsl_arr, alpha_255: false)
+      rgb = hsl_to_rgb(hsl_arr)
+      rgb_to_hex(rgb, alpha_255: alpha_255)
+    end
+
+    def hex_to_hsv(hex, rounding = hsx_round, alpha_255: false)
+      rgb = hex_to_rgb(hex, alpha_255: alpha_255)
+      rgb_to_hsv(rgb, rounding)
+    end
+
+    def hsv_to_hex(hsv_arr, alpha_255: false)
+      rgb = hsv_to_rgb(hsv_arr)
+      rgb_to_hex(rgb, alpha_255: alpha_255)
+    end
+
+    alias_method :hex_to_hsb, :hex_to_hsv
+    alias_method :hsb_to_hex, :hsv_to_hex
+
+    def hex_to_hsi(hex, rounding = hsx_round, alpha_255: false)
+      rgb = hex_to_rgb(hex, alpha_255: alpha_255)
+      rgb_to_hsi(rgb, rounding)
+    end
+
+    def hsi_to_hex(hsi_arr, alpha_255: false)
+      rgb = hsi_to_rgb(hsi_arr)
+      rgb_to_hex(rgb, alpha_255: alpha_255)
+    end
+
+    def hex_to_cmyk(hex, rounding = hsx_round, alpha_255: false)
+      rgb = hex_to_rgb(hex, alpha_255: alpha_255)
+      rgb_to_cmyk(rgb, rounding)
+    end
+
+    def cmyk_to_hex(cmyk_arr, alpha_255: false)
+      rgb = cmyk_to_rgb(cmyk_arr)
+      rgb_to_hex(rgb, alpha_255: alpha_255)
+    end
+
+
     private
 
-    #========= helper methods for RGB to HSL/HSB/HSV =======================
+    #========= helper methods ==============================================
 
     # find greatest and smallest channel values and chroma from RGB
     def get_min_max_chroma(red, green, blue)
@@ -293,8 +389,20 @@ module Decolmor
       when 3...4 then [0, x, chroma]
       when 4...5 then [x, 0, chroma]
       when 5...6 then [chroma, 0, x]
-      else [0, 0, 0]
+      # HUE will never leave the 0..359 range because we use (hue % 360)
+      # else [0, 0, 0]
       end
+    end
+
+    # checking rgb on overrange 0..1
+    def fix_overrange_rgb(rgb)
+      max = rgb.max
+      # so we keep HUE
+      # if we had just used clipping [[value, 255].min, 0].max
+      # we would have changed HUE
+      #
+      # Thx to Rotem & Giacomo Catenazzi from stackoverflow
+      max > 1 ? rgb.map { |channel|  channel / max } : rgb
     end
   end
 

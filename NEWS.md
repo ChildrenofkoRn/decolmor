@@ -1,5 +1,10 @@
 # News
 
+## 1.3.0 (September 27, 2021)
+
+  * added support HSI <==> RGB
+  * added methods for HEX <==> HSL/HSV/HSB/HSI/CMYK
+
 ## 1.2.0 (September 21, 2021)
 
   * `.hex_to_rgb` now support a returnable alpha in range `0..255`  
